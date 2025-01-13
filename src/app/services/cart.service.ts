@@ -6,6 +6,7 @@ import { Subject } from 'rxjs';
   providedIn: 'root'
 })
 export class CartService {
+ 
 
   cartItems: CartItem[] = [];
 
@@ -15,6 +16,28 @@ export class CartService {
 
 
   constructor() { }
+
+  decrementQuantity(theCartItem: CartItem) {
+   theCartItem.quantity--;
+
+   if(theCartItem.quantity ===0){
+    this.remove(theCartItem);
+   }else{
+    this.computeCartTotals();
+   }
+  }
+
+  remove(theCartItem: CartItem) {
+    /* get the index of item in the array! */
+    const intemIndex = this.cartItems.findIndex
+    (tempCartItem => tempCartItem.id === theCartItem.id);
+
+    /* if found, remove the item from the array at the given index */
+    if(intemIndex>-1){
+      this.cartItems.splice(intemIndex,1);
+      this.computeCartTotals()
+    }
+  }
 
   addToCart(theCartItem: CartItem) {
     /* check if we already have item in our cart */
@@ -32,7 +55,7 @@ export class CartService {
      /* AFTER CODE | REFACTORING */
      existingCartItem = this.cartItems.find(
       tempcartItem => tempcartItem.id === theCartItem.id)!;
-      
+
       /* check if we found it */
       alreadyExistsInCart = (existingCartItem != undefined);
     }
@@ -48,6 +71,7 @@ export class CartService {
     this.computeCartTotals();
 
   }
+
   computeCartTotals() {
    let totalPriceValue:number =0;
    let totalQuantityValue:number = 0;
