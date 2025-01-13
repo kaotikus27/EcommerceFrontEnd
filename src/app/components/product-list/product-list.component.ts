@@ -11,9 +11,17 @@ import { ProductService } from 'src/app/services/product.service';
 export class ProductListComponent implements OnInit {
 
 
+
   products: Product[]=[];
   currentCategoryId:number = 1 ;
+  previousCategoryId:number = 1 ;
   searchMode:boolean = false;
+
+  /* new properties for pagination */
+  thePageNumber:number = 1;
+  thePageSize:number =5;
+  theTotalElements:number = 0;
+
 
   constructor( 
     private productService: ProductService, 
@@ -21,12 +29,21 @@ export class ProductListComponent implements OnInit {
 
   ngOnInit(): void {
     this.route.paramMap.subscribe(()=>{
-      this.listProducts();
+      this.ListProducts();
     });
   
   }
 
- listProducts(){
+
+  updatePageSize(pageSize: string) {
+    this.thePageSize = +pageSize;
+    this.thePageNumber = 1;
+    this.ListProducts();
+    }
+
+
+
+ ListProducts(){
     this.searchMode = this.route.snapshot.paramMap.has('keyword');
     if(this.searchMode){
       this.handleSearchProduct();
@@ -60,13 +77,44 @@ export class ProductListComponent implements OnInit {
       this.currentCategoryId = 1;
     }
 
+
+    /*
+    Check if we have different catergory than previous
+    Note: Angular will reuse a component if it is currently being viewed
+    
+    If we have a different category id than previous then set thePageNumber back to 1
+    */
+
+    if(this.previousCategoryId != this.currentCategoryId){
+      this.thePageNumber =1;
+    }
+
+    this.previousCategoryId = this.currentCategoryId;
+    console.log(`currentCategoryId=${this.currentCategoryId}, thePageNumber=${this.thePageNumber}`);
+
     /* getting the product for the given category id */
-    this.productService.getProductList(this.currentCategoryId).subscribe(
+    /* this.productService.getProductList(this.currentCategoryId).subscribe(
       data=>{
         this.products= data;
         console.log(data)
       }
-    )
+    ) */
+
+      /* -1 because Spring Data REST: pages are 0 based */
+      this.productService.getProductListPaginate(
+        this.thePageNumber -1,
+        this.thePageSize,
+        this.currentCategoryId)
+        .subscribe(
+              data=> {
+                this.products = data._embedded.products;
+                /* Spring Data REST: pages are 0 based */
+                this.thePageNumber = data.page.number + 1;
+                this.thePageSize = data.page.size;
+                this.theTotalElements= data.page.totalElements;                                        
+            }
+        );
+
   }
 
 }

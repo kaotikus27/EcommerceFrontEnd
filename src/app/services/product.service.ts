@@ -9,7 +9,14 @@ import { ProductCatergory } from '../common/product-catergory';
 interface GetResponseProduct{
   _embedded:{
     products:Product[];
-  }
+  }, 
+    page: 
+    {
+      size:number,
+      totalElements:number,
+      totalPages:number,
+      number:number
+    }
 }
 
 interface GetResponseProductCategory{
@@ -18,11 +25,14 @@ interface GetResponseProductCategory{
   }
 }
 
+/* end INTERFACES */
+
 @Injectable({
   providedIn: 'root'
 })
 
 export class ProductService {
+ 
  
 
   // private baseUrl ="http://localhost:8080/api/products?size=100";
@@ -33,28 +43,41 @@ export class ProductService {
     private httpClient: HttpClient
   ) { }
 
-  
+
+  getProduct(theProductId: number): Observable<Product> {
+    /* build URL based on product id */
+    const productUrl =`${this.baseUrl}/${theProductId}`;
+    return this.httpClient.get<Product>(productUrl);
+    
+  }
+
+  /* URL based on category id, page and size */
+  getProductListPaginate( thePage:number, 
+                          thePagesize:number, 
+                          theCategoryId:number) : Observable<GetResponseProduct>{
+                            
+    const searchUrl= `${this.baseUrl}/search/findByCategoryId?id=${theCategoryId}` 
+                      +`&page=${thePage}&size=${thePagesize}`;
+
+    return this.httpClient.get<GetResponseProduct>(searchUrl);
+  }
 
 
+/* URL based on category id, */
   getProductList(theCategoryId:number): Observable<Product[]>{
-
-    /* @TODO: need to build URL based on category id ... [DONE] */
     const searchUrl= `${this.baseUrl}/search/findByCategoryId?id=${theCategoryId}`;
-
     return this.getProducts(searchUrl);
 
   }
 
 
   searchProducts(theKeyword: string): Observable<Product[]> {
-
-    /* @TODO: need to build URL based on findByNameContaining ... [DONE] */
     const searchUrl= `${this.baseUrl}/search/findByNameContaining?name=${theKeyword}`;
-
     return this.getProducts(searchUrl);
     
   }
 
+  /* the refractor method used in searchProducts and getProductList */
   private getProducts(searchUrl: string): Observable<Product[]> {
     return this.httpClient.get<GetResponseProduct>(searchUrl).pipe(
       map(response => response._embedded.products)
@@ -62,7 +85,6 @@ export class ProductService {
   }
 
   getProductCategories():Observable<ProductCatergory[]> {
-
     return this.httpClient.get<GetResponseProductCategory>(this.categoryUrl).pipe(
       map(response=> response._embedded.productCategory)
     );
