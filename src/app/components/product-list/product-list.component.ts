@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { CartItem } from 'src/app/common/cart-item';
 import { Product } from 'src/app/common/product';
+import { CartService } from 'src/app/services/cart.service';
 import { ProductService } from 'src/app/services/product.service';
 
 @Component({
@@ -23,7 +25,10 @@ export class ProductListComponent implements OnInit {
   theTotalElements:number = 0;
 
 
+  previousKeyword: string = "";
+
   constructor( 
+    private cartService:CartService,
     private productService: ProductService, 
     private route: ActivatedRoute ) { }
 
@@ -55,15 +60,29 @@ export class ProductListComponent implements OnInit {
   }
 
   handleSearchProduct() {
+
     const theKeyword: string = this.route.snapshot.paramMap.get('keyword')!;
 
+   /* if we have different keyword than previous then set thePageNumber to 1 */
+    if(this.previousKeyword !=theKeyword){
+      this.thePageNumber=1;
+    }
+    this.previousKeyword = theKeyword;
+    
+    console.log(`keyword=${theKeyword}, thePageNubmer=${this.thePageNumber}` );
+
     /* search for the product using the keyword */
-    this.productService.searchProducts(theKeyword).subscribe(
+    /* this.productService.searchProducts(theKeyword).subscribe(
       data=>{
         this.products = data;
       }
-    )
+    ) */
+    /* updated code for pagination */
+    this.productService.searchProductsPaginate(this.thePageNumber -1,
+                                               this.thePageSize,
+                                               theKeyword).subscribe(this.processResult());
   }
+  
 
   handleListProduct(){
     /* check if "id" parameter is available */
@@ -90,7 +109,8 @@ export class ProductListComponent implements OnInit {
     }
 
     this.previousCategoryId = this.currentCategoryId;
-    console.log(`currentCategoryId=${this.currentCategoryId}, thePageNumber=${this.thePageNumber}`);
+    console.log(`currentCategoryId=${this.currentCategoryId}, 
+                  thePageNumber=${this.thePageNumber}`);
 
     /* getting the product for the given category id */
     /* this.productService.getProductList(this.currentCategoryId).subscribe(
@@ -105,16 +125,27 @@ export class ProductListComponent implements OnInit {
         this.thePageNumber -1,
         this.thePageSize,
         this.currentCategoryId)
-        .subscribe(
-              data=> {
-                this.products = data._embedded.products;
-                /* Spring Data REST: pages are 0 based */
-                this.thePageNumber = data.page.number + 1;
-                this.thePageSize = data.page.size;
-                this.theTotalElements= data.page.totalElements;                                        
-            }
-        );
+        .subscribe(this.processResult());
 
+  }
+
+
+  /* searchProductsPaginate */
+  processResult(){
+   return (data: any)=>{
+    this.products = data._embedded.products;
+    this.thePageNumber = data.page.number +1;
+    this.thePageSize = data.page.size;
+    this.theTotalElements = data.page.totalElemets;
+   }
+  }
+
+  addToCart(theProduct: Product){
+    console.log(`adding to cart: ${theProduct.name}, ${theProduct.unitPrice}`)
+
+    const theCartItem = new CartItem(theProduct);
+
+    this.cartService.addToCart(theCartItem);
   }
 
 }
