@@ -1,15 +1,58 @@
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { Country } from '../common/country';
+import { State } from '../common/state';
+
+
+/* INTERFACES */
+interface GetResponseCountries{
+  _embedded:{
+    countries:Country[];
+  }
+}
+interface GetResponseStates{
+  _embedded:{
+    states: State[];
+  }
+}
+/* END  INTERFACES */
+
 
 @Injectable({
   providedIn: 'root'
 })
+
+
+
 export class ShopFormService {
 
-  constructor() {
+  private countriesUrl= 'http://localhost:8080/api/countries';
+  private stateUrl= 'http://localhost:8080/api/states';
+
+  constructor( 
+    private httpClient: HttpClient
+
+  ) {
 
    }
 
+   /* getting the countries */
+   getCountries(): Observable<Country[]>{
+    return this.httpClient.get<GetResponseCountries>(this.countriesUrl).pipe(
+      map(response=> response._embedded.countries)
+    );
+   }
+
+   /* getting the states */
+   getStates(theCountryCode:string):Observable<State[]>{
+    const searchStatesUrl =`${this.stateUrl}/search/findByCountryCode?code=${theCountryCode}`;
+    return this.httpClient.get<GetResponseStates>(searchStatesUrl).pipe(
+      map(response => response._embedded.states)
+    );
+
+   }
 
    getCreditCardMonths(startMonth:number): Observable<number[]>{
     let data:number[]=[];
@@ -28,7 +71,7 @@ export class ShopFormService {
     const startYear:number = new Date().getFullYear();
     const endYear:number = startYear +10;
 
-    for( let theYear = startYear; theYear <=endYear; theYear++){
+    for( let theYear = startYear; theYear <= endYear; theYear++){
       data.push(theYear);
     }
     return of(data);
