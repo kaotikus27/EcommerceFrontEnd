@@ -1,7 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormGroupName, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { Country } from 'src/app/common/country';
+import { Order } from 'src/app/common/order';
+import { OrderItem } from 'src/app/common/order-item';
+import { Purchase } from 'src/app/common/purchase';
 import { State } from 'src/app/common/state';
+import { CartService } from 'src/app/services/cart.service';
+import { CheckoutService } from 'src/app/services/checkout.service';
 import { ShopFormService } from 'src/app/services/shop-form.service';
 import { ShopValidators } from 'src/app/validators/shop-validators';
 
@@ -28,12 +34,17 @@ export class CheckoutComponent implements OnInit {
   
 
   constructor(
-   
-    private shopFormService:ShopFormService,
+    private checkoutService:CheckoutService,
+    private router:Router,
+    private cartService:CartService,
+     private shopFormService:ShopFormService,
     private formBuilder:FormBuilder
   ) { }
 
   ngOnInit(): void {
+
+    this.reviewCardDetails();
+    
     this.checkoutFormGroup = this.formBuilder.group({
       customer: this.formBuilder.group({
         firstName:new FormControl('',
@@ -136,6 +147,22 @@ export class CheckoutComponent implements OnInit {
 
   }
 
+
+
+  reviewCardDetails() {
+    /* subscribe to cartService.totalQuanty */
+    this.cartService.totalQuantity.subscribe(
+      totalQuantity => this.totalQuantity = totalQuantity
+    );
+
+
+    /* subscribe to cartService.totalPrice */
+    this.cartService.totalPrice.subscribe(
+      totalPrice => this.totalPrice = totalPrice
+    );
+  }
+
+
   /* populate  state method */
   getStates(formGroupName:string){
     const formGroup = this.checkoutFormGroup.get(formGroupName);
@@ -164,42 +191,86 @@ export class CheckoutComponent implements OnInit {
 
   onSubmit(){
     console.log("submission")
-
     if(this.checkoutFormGroup.invalid){
       /* markAllAsTouched() os angular builtIn method fo 
       touching all fields triggers the display of the rror messages */
       this.checkoutFormGroup.markAllAsTouched();
-
+      return;
     }
-
     console.log(this.checkoutFormGroup.get('customer')?.value)
+
+    /* setup order */
+    let order = new Order();
+    order.totalPrice = this.totalPrice;
+    order.totalQuantity = this.totalQuantity;
+
+
+    /* get cart Items */
+    const cartItems= this.cartService.cartItems;
+
+    /* create orderItems from cartItems */
+    /* LONG WAY TO LOOP */
+    /* let orderItems: OrderItem[] = [];
+    for (let i = 0; i < cartItems.length; i++) {
+      orderItems[i] = new Order(cartItems[i]);
+    } */
+    /* SHORT WAY TO LOOP */
+    let orderItems: OrderItem[] = cartItems.map(tempCartItem => new OrderItem(tempCartItem));
+
+    /* setup purchase */
+    let purchase = new Purchase();
+
+    /* populate purchase - customer */
+    purchase.customer = this.checkoutFormGroup.controls['customer'].value;
+
+    /* populate purchase - shipping address */
+    purchase.shippingAddress = this.checkoutFormGroup.controls['shippingAddress'].value;
+    const shippingState: State = JSON.parse(JSON.stringify(purchase.shippingAddress.state));
+    purchase.shippingAddress.state= shippingState.name;
+    const shippingCountry: Country = JSON.parse(JSON.stringify(purchase.shippingAddress.country));
+    purchase.shippingAddress.country = shippingCountry.name
+
+    /* populate purcase - billing address */
+    purchase.billingAddress = this.checkoutFormGroup.controls['billingAddress'].value;
+    const billingState: State = JSON.parse(JSON.stringify(purchase.billingAddress.state));
+    purchase.billingAddress.state= billingState.name;
+    const billingCountry: Country = JSON.parse(JSON.stringify(purchase.billingAddress.country));
+    purchase.billingAddress.country = billingCountry.name
+
+    /* populate purchase - order and orderitems */
+    purchase.order= order;
+    purchase.orderItems = orderItems;
+
+    /* call REST API via the checkoutService */
+    this.checkoutService.placeOrder(purchase).subscribe(
+      {
+        next: response =>{
+          alert(`Your order has been received.\nOrder tracking number: ${response.orderTrackingNumber}`);
+          
+          /* reset cart */
+          this.resetCart();
+        },
+        error: err=>{
+          alert(`There was an error: ${err.message}`);
+        }
+      }
+    );
   }
 
+  resetCart() {
+    /* reset cart */
+    this.cartService.cartItems = [];
+    this.cartService.totalPrice.next(0);
+    this.cartService.totalQuantity.next(0);
 
-  /* GETTER METHODS  */
-  get firstName(){return this.checkoutFormGroup.get('customer.firstName'); }
-  get lastName(){return this.checkoutFormGroup.get('customer.lastName'); }
-  get email(){return this.checkoutFormGroup.get('customer.email'); }
+    /* reset the form  */
+    this.checkoutFormGroup.reset();
 
-  get shippingAddressStreet(){return this.checkoutFormGroup.get('shippingAddress.street'); }
-  get shippingAddressCity(){return this.checkoutFormGroup.get('shippingAddress.city'); }
-  get shippingAddressState(){return this.checkoutFormGroup.get('shippingAddress.state'); }
-  get shippingAddressCountry(){return this.checkoutFormGroup.get('shippingAddress.country'); }
-  get shippingAddressZipCode(){return this.checkoutFormGroup.get('shippingAddress.zipCode'); }
+    /* navigate back to main product page */
+    this.router.navigateByUrl("/products");
 
-  get billingAddressStreet(){return this.checkoutFormGroup.get('billingAddress.street'); }
-  get billingAddressCity(){return this.checkoutFormGroup.get('billingAddress.city'); }
-  get billingAddressState(){return this.checkoutFormGroup.get('billingAddress.state'); }
-  get billingAddressCountry(){return this.checkoutFormGroup.get('billingAddress.country'); }
-  get billingAddressZipCode(){return this.checkoutFormGroup.get('billingAddress.zipCode'); }
 
-  get creditCardType(){return this.checkoutFormGroup.get('creditCard.cardType'); }
-  get creditCardNameOnCard(){return this.checkoutFormGroup.get('creditCard.nameOnCard'); }
-  get creditCardnumber(){return this.checkoutFormGroup.get('creditCard.cardnumber'); }
-  get creditNumber(){return this.checkoutFormGroup.get('creditCard.cardNumber'); }
-  get creditSecurityCode(){return this.checkoutFormGroup.get('creditCard.securityCode'); }
-
-  /* END ---- >  GETTER METHODS  */
+  }
 
   copyShippingAddressToBillingAddress(event:any) {
       if(event.target.checked){
@@ -237,5 +308,31 @@ export class CheckoutComponent implements OnInit {
       )
 
     }
+
+
+    /* GETTER METHODS  */
+  get firstName(){return this.checkoutFormGroup.get('customer.firstName'); }
+  get lastName(){return this.checkoutFormGroup.get('customer.lastName'); }
+  get email(){return this.checkoutFormGroup.get('customer.email'); }
+
+  get shippingAddressStreet(){return this.checkoutFormGroup.get('shippingAddress.street'); }
+  get shippingAddressCity(){return this.checkoutFormGroup.get('shippingAddress.city'); }
+  get shippingAddressState(){return this.checkoutFormGroup.get('shippingAddress.state'); }
+  get shippingAddressCountry(){return this.checkoutFormGroup.get('shippingAddress.country'); }
+  get shippingAddressZipCode(){return this.checkoutFormGroup.get('shippingAddress.zipCode'); }
+
+  get billingAddressStreet(){return this.checkoutFormGroup.get('billingAddress.street'); }
+  get billingAddressCity(){return this.checkoutFormGroup.get('billingAddress.city'); }
+  get billingAddressState(){return this.checkoutFormGroup.get('billingAddress.state'); }
+  get billingAddressCountry(){return this.checkoutFormGroup.get('billingAddress.country'); }
+  get billingAddressZipCode(){return this.checkoutFormGroup.get('billingAddress.zipCode'); }
+
+  get creditCardType(){return this.checkoutFormGroup.get('creditCard.cardType'); }
+  get creditCardNameOnCard(){return this.checkoutFormGroup.get('creditCard.nameOnCard'); }
+  get creditCardnumber(){return this.checkoutFormGroup.get('creditCard.cardnumber'); }
+  get creditNumber(){return this.checkoutFormGroup.get('creditCard.cardNumber'); }
+  get creditSecurityCode(){return this.checkoutFormGroup.get('creditCard.securityCode'); }
+
+  /* END ---- >  GETTER METHODS  */
 
 }
