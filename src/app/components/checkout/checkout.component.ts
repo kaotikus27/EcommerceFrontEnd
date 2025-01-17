@@ -213,7 +213,7 @@ export class CheckoutComponent implements OnInit {
     /* let orderItems: OrderItem[] = [];
     for (let i = 0; i < cartItems.length; i++) {
       orderItems[i] = new Order(cartItems[i]);
-    } */
+    } */ 
     /* SHORT WAY TO LOOP */
     let orderItems: OrderItem[] = cartItems.map(tempCartItem => new OrderItem(tempCartItem));
 
