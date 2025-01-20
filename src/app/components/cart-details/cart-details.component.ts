@@ -16,6 +16,9 @@ export class CartDetailsComponent implements OnInit {
   totalQuantity: number = 0;
 
 
+
+
+
   constructor(
     private cartService: CartService
   ) {
