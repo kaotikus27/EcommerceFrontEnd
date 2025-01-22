@@ -4,7 +4,7 @@ import { ProductListComponent } from './components/product-list/product-list.com
 import { ProductDetailsComponent } from './components/product-details/product-details.component';
 import { CartDetailsComponent } from './components/cart-details/cart-details.component';
 import { CheckoutComponent } from './components/checkout/checkout.component';
-import { OktaAuthGuard, OktaCallbackComponent } from '@okta/okta-angular';
+import { OktaAuthGuard, OktaAuthModule, OktaCallbackComponent } from '@okta/okta-angular';
 import { LoginComponent } from './components/login/login.component';
 import { MembersPageComponent } from './components/members-page/members-page.component';
 import { OktaAuth } from '@okta/okta-auth-js';
@@ -35,7 +35,7 @@ const routes: Routes = [
   },
 
   { path:'login/callback', component: OktaCallbackComponent},
-  
+
   { path:'login', component: LoginComponent},
   
   { path:'checkout', component: CheckoutComponent},
@@ -52,7 +52,11 @@ const routes: Routes = [
 ];
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes)],
+  imports: 
+  [
+    RouterModule.forRoot(routes),
+    OktaAuthModule
+  ],
   exports: [RouterModule]
 })
 export class AppRoutingModule { }

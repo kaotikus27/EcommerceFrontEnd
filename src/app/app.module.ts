@@ -61,8 +61,8 @@ const oktaAuth = new OktaAuth(oktaConfig);
     OktaAuthModule
   ],
   providers: [
-    { provide: OKTA_CONFIG, useValue:{oktaAuth}},
-    {provide: HTTP_INTERCEPTORS, useClass: AuthInterceptorService, multi: true}
+    { provide: OKTA_CONFIG, useValue: {oktaAuth}},
+    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptorService, multi: true}
 
   ],
   bootstrap: [AppComponent]

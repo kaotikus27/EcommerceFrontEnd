@@ -20,14 +20,11 @@ export class LoginComponent implements OnInit {
 
   ) {
     this.oktaSignin = new OktaSignIn({
+
       logo:'assets/images/logo.png',
       baseUrl:myAppConfig.oidc.issuer.split('/oauth2')[0],
       clietId: myAppConfig.oidc.clientId,
       redirectUri: myAppConfig.oidc.redirectUri,
-      useClassicEngine: true,
-      features: {
-        registration: true
-      },
       authParams: {
         pkce: true,
         issuer:myAppConfig.oidc.issuer,
@@ -40,6 +37,7 @@ export class LoginComponent implements OnInit {
 
   ngOnInit(): void {
     this.oktaSignin.remove();
+
     this.oktaSignin.renderEl(
       /* this name should be the same div tag id in login.component.html */
       {el: '#okta-sign-in-widget'},
@@ -54,7 +52,5 @@ export class LoginComponent implements OnInit {
     );
   }
   
-  ngOnDestroy() {
-    this.oktaSignin.remove();
-  }
+  
 }

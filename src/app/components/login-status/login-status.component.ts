@@ -27,8 +27,9 @@ export class LoginStatusComponent implements OnInit {
         this.isAuthenticated = result.isAuthenticated!;
         this.getUserDetails();
       }
-    )
+    );
   }
+
   getUserDetails() {
     if (this.isAuthenticated) {
       /* Fetch the logged in user details (user's claims) 
@@ -39,9 +40,7 @@ export class LoginStatusComponent implements OnInit {
           
           this.userFullName = res.name as string;
 
-
           /* retrieve the user's email from authentication response */
-
           const theEmail = res.email;
 
           /* now store the email in browser storage */
