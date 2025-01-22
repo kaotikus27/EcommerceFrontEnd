@@ -31,7 +31,7 @@ export class CheckoutComponent implements OnInit {
   shippingAddressStates: State[]=[];
   billingAddressStates: State[]=[];
   
-  
+  storage: Storage = sessionStorage;
 
   constructor(
     private checkoutService:CheckoutService,
@@ -45,6 +45,12 @@ export class CheckoutComponent implements OnInit {
 
     this.reviewCardDetails();
     
+    /* reading the user's email address from the browser storage */
+
+    const theEmail = JSON.parse(this.storage.getItem('userEmail')!);
+
+
+
     this.checkoutFormGroup = this.formBuilder.group({
       customer: this.formBuilder.group({
         firstName:new FormControl('',
@@ -59,7 +65,7 @@ export class CheckoutComponent implements OnInit {
            Validators.minLength(2), 
            ShopValidators.notOnlyWhitespace
           ]),
-        email:new FormControl('', 
+        email:new FormControl(theEmail, 
             [
               Validators.required,
               Validators.pattern('^[a-zA-Z0-9_.±]+@[a-zA-Z0-9-]+.[a-zA-Z0-9-.]+$')
