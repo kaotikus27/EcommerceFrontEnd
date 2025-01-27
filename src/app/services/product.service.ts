@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { Product } from '../common/product';
 import { map } from 'rxjs/operators';
 import { ProductCatergory } from '../common/product-catergory';
+import { environment } from 'src/environments/environment';
 
 /* INTERFACES */
 interface GetResponseProduct {
@@ -34,8 +35,8 @@ interface GetResponseProductCategory {
 export class ProductService {
 
   // private baseUrl ="http://localhost:8080/api/products?size=100";
-  private baseUrl = "http://localhost:8080/api/products";
-  private categoryUrl = "http://localhost:8080/api/product-category"
+  private baseUrl = environment.EcommeceShopErul + "/products";
+  private categoryUrl = environment.EcommeceShopErul + "/product-category"
 
   constructor(
     private httpClient: HttpClient

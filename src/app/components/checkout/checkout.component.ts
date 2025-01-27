@@ -204,7 +204,7 @@ export class CheckoutComponent implements OnInit {
       return;
     }
     console.log(this.checkoutFormGroup.get('customer')?.value)
-
+    
     /* setup order */
     let order = new Order();
     order.totalPrice = this.totalPrice;
@@ -251,10 +251,12 @@ export class CheckoutComponent implements OnInit {
     this.checkoutService.placeOrder(purchase).subscribe(
       {
         next: response =>{
-          alert(`Your order has been received.\nOrder tracking number: ${response.orderTrackingNumber}`);
+          alert(`Your order has been received.\nOrder tracking number: 
+            ${response.orderTrackingNumber}`);
           
           /* reset cart */
           this.resetCart();
+          
         },
         error: err=>{
           alert(`There was an error: ${err.message}`);
