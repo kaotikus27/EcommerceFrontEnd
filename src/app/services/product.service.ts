@@ -66,6 +66,7 @@ export class ProductService {
     const searchUrl = `${this.baseUrl}/search/findByCategoryId?id=${theCategoryId}`
       + `&page=${thePage}&size=${thePagesize}`;
 
+      console.log(`Getting the prodcuts from ${searchUrl}`)
     return this.httpClient.get<GetResponseProduct>(searchUrl);
   }
 
